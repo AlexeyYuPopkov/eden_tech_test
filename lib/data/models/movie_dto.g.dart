@@ -11,7 +11,16 @@ MovieDto _$MovieDtoFromJson(Map<String, dynamic> json) => MovieDto(
       title: json['title'] as String? ?? '',
       year: json['year'] as String,
       posterUrl: json['posterurl'] as String? ?? '',
-      releaseDate: MovieDto._releaseDateFromJson(json['releaseDate'] as String),
+      duration: _DurationParser.parseISODuration(json['duration'] as String),
+      ratings: (json['ratings'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          [],
+      storyline: json['storyline'] as String? ?? '',
+      actors: (json['actors'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
 
 Map<String, dynamic> _$MovieDtoToJson(MovieDto instance) => <String, dynamic>{
@@ -19,5 +28,8 @@ Map<String, dynamic> _$MovieDtoToJson(MovieDto instance) => <String, dynamic>{
       'title': instance.title,
       'year': instance.year,
       'posterurl': instance.posterUrl,
-      'releaseDate': instance.releaseDate?.toIso8601String(),
+      'duration': instance.duration?.inMicroseconds,
+      'ratings': instance.ratings,
+      'storyline': instance.storyline,
+      'actors': instance.actors,
     };

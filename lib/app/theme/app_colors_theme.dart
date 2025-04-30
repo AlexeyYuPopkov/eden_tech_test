@@ -6,6 +6,7 @@ final _cache = <Brightness, AppColorsTheme>{};
 
 @immutable
 final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
+  final Brightness brightness;
   final Color primaryBody;
   final Color? primaryBodyVariant;
   final Color secondaryBody;
@@ -19,9 +20,11 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
   final Color tabMenuUnselected;
   final Color commentsNested;
   final Color selectedPurpleButton;
-  final Color updatedItemLight;
+  final Color updatedItem;
+  final Color star;
 
   const AppColorsTheme({
+    required this.brightness,
     required this.primaryBody,
     required this.primaryBodyVariant,
     required this.secondaryBody,
@@ -35,7 +38,8 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     required this.tabMenuUnselected,
     required this.commentsNested,
     required this.selectedPurpleButton,
-    required this.updatedItemLight,
+    required this.updatedItem,
+    required this.star,
   });
 
   static AppColorsTheme of(BuildContext context) {
@@ -54,6 +58,7 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
 
   factory AppColorsTheme.lightTheme() {
     return const AppColorsTheme(
+      brightness: Brightness.light,
       primaryBody: AppColors.primaryBodyLight,
       primaryBodyVariant: Color(0xFF202124),
       secondaryBody: AppColors.secondaryBodyLight,
@@ -67,12 +72,14 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       tabMenuUnselected: AppColors.tabMenuUnselectedLight,
       commentsNested: AppColors.commentsNestedLight,
       selectedPurpleButton: AppColors.selectedPurpleButtonLight,
-      updatedItemLight: AppColors.updatedItemLight,
+      updatedItem: AppColors.updatedItemLight,
+      star: AppColors.starLight,
     );
   }
 
   factory AppColorsTheme.darkTheme() {
     return const AppColorsTheme(
+      brightness: Brightness.dark,
       primaryBody: AppColors.primaryBodyDark,
       primaryBodyVariant: null,
       secondaryBody: AppColors.secondaryBodyDark,
@@ -86,7 +93,8 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       tabMenuUnselected: AppColors.tabMenuUnselectedDark,
       commentsNested: AppColors.commentsNestedDark,
       selectedPurpleButton: AppColors.selectedPurpleButtonDark,
-      updatedItemLight: AppColors.updatedItemDark,
+      updatedItem: AppColors.updatedItemDark,
+      star: AppColors.starDark,
     );
   }
 
@@ -97,6 +105,7 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       return this;
     }
     return AppColorsTheme(
+      brightness: t < 0.5 ? brightness : other.brightness,
       primaryBody: Color.lerp(primaryBody, other.primaryBody, t)!,
       primaryBodyVariant:
           Color.lerp(primaryBodyVariant, other.primaryBodyVariant, t)!,
@@ -116,8 +125,8 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       commentsNested: Color.lerp(commentsNested, other.commentsNested, t)!,
       selectedPurpleButton:
           Color.lerp(selectedPurpleButton, other.selectedPurpleButton, t)!,
-      updatedItemLight:
-          Color.lerp(updatedItemLight, other.updatedItemLight, t)!,
+      updatedItem: Color.lerp(updatedItem, other.updatedItem, t)!,
+      star: Color.lerp(star, other.star, t)!,
     );
   }
 
@@ -136,10 +145,11 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     Color? tabMenuUnselected,
     Color? commentsNested,
     Color? selectedPurpleButton,
-    Color? updatedItemLight,
-    LinearGradient? logoGradient,
+    Color? updatedItem,
+    Color? star,
   }) {
     return AppColorsTheme(
+      brightness: brightness,
       primaryBody: primaryBody ?? this.primaryBody,
       primaryBodyVariant: primaryBodyVariant ?? this.primaryBodyVariant,
       secondaryBody: secondaryBody ?? this.secondaryBody,
@@ -154,7 +164,39 @@ final class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       tabMenuUnselected: tabMenuUnselected ?? this.tabMenuUnselected,
       commentsNested: commentsNested ?? this.commentsNested,
       selectedPurpleButton: selectedPurpleButton ?? this.selectedPurpleButton,
-      updatedItemLight: updatedItemLight ?? this.updatedItemLight,
+      updatedItem: updatedItem ?? this.updatedItem,
+      star: star ?? this.star,
     );
+  }
+}
+
+final class ShimmerColors {
+  final Color baseColor;
+  final Color highlightColor;
+  final Color decorationColor;
+
+  const ShimmerColors({
+    required this.baseColor,
+    required this.highlightColor,
+    required this.decorationColor,
+  });
+}
+
+extension ShimmerColorsTheme on AppColorsTheme {
+  ShimmerColors shimmerColors() {
+    switch (brightness) {
+      case Brightness.light:
+        return const ShimmerColors(
+          baseColor: Color(0xB3ECE6F0),
+          highlightColor: Color(0XFFE8DEF8),
+          decorationColor: Color(0xB3ECE6F0),
+        );
+      case Brightness.dark:
+        return const ShimmerColors(
+          baseColor: Color(0xB3ECE6F0),
+          highlightColor: Color(0XFFE8DEF8),
+          decorationColor: Color(0xB3ECE6F0),
+        );
+    }
   }
 }

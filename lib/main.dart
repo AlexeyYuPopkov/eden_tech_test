@@ -1,12 +1,20 @@
+import 'package:di_storage/di_storage.dart';
+import 'package:eden_tech_test/app/di/unauth/unauth_di.dart';
+import 'package:eden_tech_test/domain/auth/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:eden_tech_test/app/router/app_router.dart';
 
+import 'app/di/auth/auth_di.dart';
 import 'app/theme/app_theme.dart';
 import 'l10n/localization.dart';
 
 final _appRouter = AppRouter();
 
-void main() => runApp(const App());
+void main() {
+  UnauthDiScope().bind(DiStorage.shared);
+
+  runApp(const App());
+}
 
 final class App extends StatelessWidget {
   const App({super.key});
@@ -20,6 +28,20 @@ final class App extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: _appRouter.router,
+      builder: (context, child) {
+        final AuthRepository authRepository = DiStorage.shared.resolve();
+        return StreamBuilder<bool>(
+          stream: authRepository.isAuthorizedStream.map(
+            (e) {
+              AuthDiScope().bind(DiStorage.shared);
+              return e;
+            },
+          ),
+          builder: (context, snapshot) {
+            return child ?? const SizedBox.shrink();
+          },
+        );
+      },
     );
   }
 }

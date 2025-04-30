@@ -25,6 +25,7 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
 
   void _setupHandlers() {
     on<InitialEvent>(_onInitialEvent);
+    on<ToggleSortPolicyEvent>(_onToggleSortPolicyEvent);
   }
 
   void _onInitialEvent(
@@ -34,7 +35,9 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
     try {
       emit(HomeScreenState.loading(data: data));
 
-      final result = await getMoviesUsecase.execute();
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final result = await getMoviesUsecase.execute(data.sortPolicy);
 
       emit(
         HomeScreenState.common(
@@ -44,5 +47,33 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
     } catch (e) {
       emit(HomeScreenState.error(error: e, data: data));
     }
+  }
+
+  void _onToggleSortPolicyEvent(
+    ToggleSortPolicyEvent event,
+    Emitter<HomeScreenState> emit,
+  ) {
+    switch (data.sortPolicy) {
+      case GetMoviesUsecaseSortByYear():
+        emit(
+          HomeScreenState.common(
+            data: data.copyWith(
+              sortPolicy: const GetMoviesUsecaseSortByRating(),
+            ),
+          ),
+        );
+        break;
+      case GetMoviesUsecaseSortByRating():
+        emit(
+          HomeScreenState.common(
+            data: data.copyWith(
+              sortPolicy: const GetMoviesUsecaseSortByYear(),
+            ),
+          ),
+        );
+        break;
+    }
+
+    add(const HomeScreenEvent.initial());
   }
 }

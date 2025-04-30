@@ -1,3 +1,5 @@
+import 'package:eden_tech_test/presentation/widgets/movie_rating.dart';
+import 'package:eden_tech_test/presentation/widgets/movie_year_and_duration.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -40,11 +42,25 @@ final class MovieItemWidget extends StatelessWidget {
                       color: theme.colorScheme.primaryContainer,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints.expand(),
-                        child: Column(
-                          children: [
-                            Text(movie.title),
-                            Text(movie.year.toString()),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(Sizes.indent2x),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: Sizes.halfIndent,
+                            children: [
+                              Text(
+                                movie.title,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              MovieYearAndDuration(movie: movie),
+                              MovieRating(movie: movie),
+                            ],
+                          ),
                         ),
                       ),
                     ),

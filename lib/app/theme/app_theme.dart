@@ -27,6 +27,13 @@ final class AppTheme {
         letterSpacing: 0,
         height: 1.0,
       ),
+      toolbarTextStyle: TextStyle(
+        color: AppColors.accentPurpleLight,
+        fontWeight: FontWeight.w700,
+        fontSize: 16.0,
+        letterSpacing: 0,
+        height: 1.0,
+      ),
       scrolledUnderElevation: 0.0,
     ),
     scaffoldBackgroundColor: AppColors.appBackgroundLight,
@@ -61,6 +68,13 @@ final class AppTheme {
     appBarTheme: const AppBarTheme(
       titleTextStyle: TextStyle(
         color: AppColors.primaryBodyDark,
+        fontWeight: FontWeight.w700,
+        fontSize: 16.0,
+        letterSpacing: 0,
+        height: 1.0,
+      ),
+      toolbarTextStyle: TextStyle(
+        color: AppColors.accentPurpleDark,
         fontWeight: FontWeight.w700,
         fontSize: 16.0,
         letterSpacing: 0,
