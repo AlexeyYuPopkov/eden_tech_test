@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static final brandedColors = BrandedColors();
-
   // Light Mode Colors
   static const Color primaryBodyLight = Color(0xFF2C233D);
   static const Color secondaryBodyLight = Color(0xFF66686C);
@@ -17,6 +15,7 @@ class AppColors {
   static const Color commentsNestedLight = Color(0xFF9FA3B2);
   static const Color selectedPurpleButtonLight = Color(0xFFD0CFD4);
   static const Color updatedItemLight = Color(0xFFEA5D2D);
+  static const Color starLight = Color.fromARGB(255, 231, 234, 45);
 
   // Dark Mode Colors
   static const Color primaryBodyDark = Color(0xFFFFFFFF);
@@ -32,10 +31,5 @@ class AppColors {
   static const Color commentsNestedDark = Color(0xFF9FA3B2);
   static const Color selectedPurpleButtonDark = Color(0xFFD0CFD4);
   static const Color updatedItemDark = Color(0xFFEA5D2D);
-}
-
-class BrandedColors {
-  final bitcoin = const Color(0xffF79626);
-  final wise = const Color(0xff9FE870);
-  final paypal = const Color(0xff2790C3);
+  static const Color starDark = Color.fromARGB(255, 234, 203, 45);
 }

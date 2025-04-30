@@ -1,17 +1,21 @@
 import 'package:eden_tech_test/domain/auth/auth_repository.dart';
+import 'package:rxdart/rxdart.dart';
 
 final class AuthRepositoryImpl implements AuthRepository {
-  bool _isAuthorized = false;
+  final _isAuthorizedSignal = BehaviorSubject.seeded(false);
 
   AuthRepositoryImpl();
 
   @override
   Future<bool> login(String username, String password) async {
     Future.delayed(const Duration(milliseconds: 500));
-    _isAuthorized = true;
-    return _isAuthorized;
+    _isAuthorizedSignal.sink.add(true);
+    return isAuthorized;
   }
 
   @override
-  bool get isAuthorized => _isAuthorized;
+  Stream<bool> get isAuthorizedStream => _isAuthorizedSignal.distinct();
+
+  @override
+  bool get isAuthorized => _isAuthorizedSignal.value;
 }

@@ -1,5 +1,12 @@
 {
+    "commonButtonBack": "Back",
+    "commonHourShort": "h",
+    "commonMinuteShort": "m",
     "commonUndefinedError": "Something went wrong",
+    "commonNoDataPlaceholderText": "No data",
     "loginScreenLoginButtonTitle": "Login",
-    "getMoviesUsecaseError": "Failed to fetch and sort movies."
+    "getMoviesUsecaseError": "Failed to fetch and sort movies.",
+    "homeScreenTitle": "Movies",
+    "homeScreenButtonSortByYear": "Sort by year",
+    "homeScreenButtonSortByRating": "Sort by rating"
 }
