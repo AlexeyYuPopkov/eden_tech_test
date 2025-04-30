@@ -1,0 +1,5 @@
+{
+    "commonUndefinedError": "Something went wrong",
+    "loginScreenLoginButtonTitle": "Login",
+    "getMoviesUsecaseError": "Failed to fetch and sort movies."
+}
