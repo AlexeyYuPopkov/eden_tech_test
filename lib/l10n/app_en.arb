@@ -1,0 +1,17 @@
+{
+    "commonButtonBack": "Back",
+    "commonHourShort": "h",
+    "commonMinuteShort": "m",
+    "commonTextMoreButtonMoreSuffix": "...more",
+    "commonUndefinedError": "Something went wrong",
+    "commonNoDataPlaceholderText": "No data",
+    "loginScreenLoginButtonTitle": "Login",
+    "getMoviesUsecaseError": "Failed to fetch and sort movies.",
+    "homeScreenTitle": "Movies",
+    "homeScreenButtonSortByYear": "Sort by year",
+    "homeScreenButtonSortByRating": "Sort by rating",
+    "homeScreenLabelRatingPrefix": "Rating:",
+    "homeScreenLabelYearPrefix": "Year:",
+    "homeScreenLabelDurationPrefix": "Duration:",
+    "movieDetailsScreenLabelActors": "Actors:"
+}
