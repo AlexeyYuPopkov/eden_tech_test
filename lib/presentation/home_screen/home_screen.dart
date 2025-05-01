@@ -1,6 +1,5 @@
 import 'package:eden_tech_test/app/router/app_router_path.dart';
 import 'package:eden_tech_test/app/theme/sizes.dart';
-import 'package:eden_tech_test/app/tools/exclude_from_tests.dart';
 import 'package:eden_tech_test/domain/models/movie.dart';
 import 'package:eden_tech_test/domain/usecases/get_movies_usecase.dart';
 import 'package:eden_tech_test/l10n/localization.dart';
@@ -47,64 +46,64 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: ExcludeFromTests(
-          child: BlocProvider(
-            create: (context) => HomeScreenBloc(),
-            child: BlocConsumer<HomeScreenBloc, HomeScreenState>(
-              listener: _listener,
-              builder: (context, state) {
-                final isLoading = state is LoadingState;
+        child: BlocProvider(
+          create: (context) => HomeScreenBloc(),
+          child: BlocConsumer<HomeScreenBloc, HomeScreenState>(
+            listener: _listener,
+            builder: (context, state) {
+              final isLoading = state is LoadingState;
+              final itemCount = isLoading ? 10 : state.data.movies.length;
 
-                return AbsorbPointer(
-                  absorbing: isLoading,
-                  child: RefreshIndicator(
-                    edgeOffset: Sizes.indent2x,
-                    onRefresh: () => _onRefresh(context),
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverAppBar(
-                          title: Text(context.l10n.homeScreenTitle),
-                          centerTitle: false,
-                          floating: true,
-                          snap: true,
-                          actions: const [
-                            _SortButton(),
-                            SizedBox(width: Sizes.indent2x),
-                          ],
-                        ),
-                        const SliverSizedBox(height: Sizes.indent2x),
-                        if (!isLoading && state.data.movies.isEmpty)
-                          SliverToBoxAdapter(
-                            child: NoDataPlaceholderScrollable(
-                              title: context.l10n.commonNoDataPlaceholderText,
-                            ),
-                          )
-                        else
-                          SliverList.separated(
-                            itemCount: state.data.movies.length,
-                            itemBuilder: (context, index) {
-                              final movie = state.data.movies[index];
-
-                              return isLoading
-                                  ? const _Shimmer()
-                                  : MovieItemWidget(
-                                      movie: movie,
-                                      onTap: () => _onDetails(context, movie),
-                                    );
-                            },
-                            separatorBuilder: (context, index) {
-                              return const SizedBox(height: Sizes.indent);
-                            },
+              return AbsorbPointer(
+                absorbing: isLoading,
+                child: RefreshIndicator(
+                  edgeOffset: Sizes.indent2x,
+                  onRefresh: () => _onRefresh(context),
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverAppBar(
+                        title: Text(context.l10n.homeScreenTitle),
+                        centerTitle: false,
+                        floating: true,
+                        snap: true,
+                        actions: const [
+                          _SortButton(),
+                          SizedBox(width: Sizes.indent2x),
+                        ],
+                      ),
+                      const SliverSizedBox(height: Sizes.indent2x),
+                      if (!isLoading && state.data.movies.isEmpty)
+                        SliverToBoxAdapter(
+                          child: NoDataPlaceholderScrollable(
+                            title: context.l10n.commonNoDataPlaceholderText,
                           ),
-                        const SliverToBoxAdapter(
-                          child: SafeArea(child: SizedBox()),
+                        )
+                      else
+                        SliverList.separated(
+                          itemCount: itemCount,
+                          itemBuilder: (context, index) {
+                            return isLoading
+                                ? const _Shimmer()
+                                : MovieItemWidget(
+                                    movie: state.data.movies[index],
+                                    onTap: () => _onDetails(
+                                      context,
+                                      state.data.movies[index],
+                                    ),
+                                  );
+                          },
+                          separatorBuilder: (context, index) {
+                            return const SizedBox(height: Sizes.indent);
+                          },
                         ),
-                      ],
-                    ),
+                      const SliverToBoxAdapter(
+                        child: SafeArea(child: SizedBox()),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

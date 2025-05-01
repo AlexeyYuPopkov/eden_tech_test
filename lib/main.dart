@@ -33,6 +33,7 @@ final class App extends StatelessWidget {
         return StreamBuilder<bool>(
           stream: authRepository.isAuthorizedStream.map(
             (e) {
+              DiStorage.shared.removeScope<AuthDiScope>();
               AuthDiScope().bind(DiStorage.shared);
               return e;
             },
