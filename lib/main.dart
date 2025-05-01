@@ -1,5 +1,6 @@
 import 'package:di_storage/di_storage.dart';
 import 'package:eden_tech_test/app/di/unauth/unauth_di.dart';
+import 'package:eden_tech_test/data/auth/fb_service.dart';
 import 'package:eden_tech_test/domain/auth/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:eden_tech_test/app/router/app_router.dart';
@@ -10,7 +11,9 @@ import 'l10n/localization.dart';
 
 final _appRouter = AppRouter();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FbAuthService.instance.init();
   UnauthDiScope().bind(DiStorage.shared);
 
   runApp(const App());

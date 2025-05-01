@@ -7,6 +7,8 @@ sealed class HomeScreenEvent extends Equatable {
 
   const factory HomeScreenEvent.toggleSortPolicy() = ToggleSortPolicyEvent;
 
+  const factory HomeScreenEvent.onAuth() = OnAuthEvent;
+
   @override
   List<Object?> get props => const [];
 }
@@ -17,4 +19,8 @@ final class InitialEvent extends HomeScreenEvent {
 
 final class ToggleSortPolicyEvent extends HomeScreenEvent {
   const ToggleSortPolicyEvent();
+}
+
+final class OnAuthEvent extends HomeScreenEvent {
+  const OnAuthEvent();
 }

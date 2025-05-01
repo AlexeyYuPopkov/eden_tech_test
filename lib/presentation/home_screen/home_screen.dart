@@ -1,5 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eden_tech_test/app/router/app_router_path.dart';
 import 'package:eden_tech_test/app/theme/sizes.dart';
+import 'package:eden_tech_test/app/tools/exclude_from_tests.dart';
+import 'package:eden_tech_test/data/auth/fb_service.dart';
+import 'package:eden_tech_test/domain/models/authorized_user.dart';
 import 'package:eden_tech_test/domain/models/movie.dart';
 import 'package:eden_tech_test/domain/usecases/get_movies_usecase.dart';
 import 'package:eden_tech_test/l10n/localization.dart';
@@ -67,7 +71,9 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
                         floating: true,
                         snap: true,
                         actions: const [
+                          _AuthButton(),
                           _SortButton(),
+                          _UserButton(),
                           SizedBox(width: Sizes.indent2x),
                         ],
                       ),
@@ -118,6 +124,59 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
     GoRouter.of(context).push(
       AppRouterPath.movieDetails,
       extra: movie.toJson(),
+    );
+  }
+}
+
+class _AuthButton extends StatelessWidget {
+  const _AuthButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      minSize: 0,
+      padding: EdgeInsets.zero,
+      // ignore: prefer_const_constructors
+      child: Text('auth'),
+      onPressed: () => _onAuth(context),
+    );
+  }
+
+  void _onAuth(BuildContext context) {
+    FbAuthService.instance.signInWithGoogle();
+  }
+}
+
+final class _UserButton extends StatelessWidget {
+  const _UserButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeFromTests(
+      child: Builder(builder: (context) {
+        return StreamBuilder<AuthorizedUser?>(
+            stream: FbAuthService.instance.authorizedUserStream,
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+
+              return AnimatedSize(
+                duration: const Duration(milliseconds: 3000),
+                child: user == null
+                    ? const SizedBox()
+                    : CupertinoButton(
+                        minSize: 0,
+                        padding: EdgeInsets.zero,
+                        child: CachedNetworkImage(
+                          imageUrl: user.photoUrl,
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.account_circle,
+                          ),
+                        ),
+                        onPressed: () {},
+                      ),
+              );
+            });
+      }),
     );
   }
 }

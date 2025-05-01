@@ -26,6 +26,7 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
   void _setupHandlers() {
     on<InitialEvent>(_onInitialEvent);
     on<ToggleSortPolicyEvent>(_onToggleSortPolicyEvent);
+    on<OnAuthEvent>(_onAuthEvent);
   }
 
   void _onInitialEvent(
@@ -76,4 +77,9 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
 
     add(const HomeScreenEvent.initial());
   }
+
+  void _onAuthEvent(
+    OnAuthEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {}
 }

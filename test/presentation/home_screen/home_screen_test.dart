@@ -97,7 +97,46 @@ void main() {
 
       expect(homeScreenBlocConsumer, findsOneWidget);
 
-      expect(find.byType(MovieItemWidget), findsNWidgets(5));
+      final listItems = find.byType(MovieItemWidget);
+
+      void chechMoviesCount() {
+        expect(listItems, findsNWidgets(5));
+      }
+
+      chechMoviesCount();
+
+      void chechMoviesSorting() {
+        final moviesIdsList = listItems.evaluate().map((element) {
+          final widget = element.widget as MovieItemWidget;
+          return widget.movie.id;
+        }).toList();
+
+        expect(moviesIdsList, equals(['1', '2', '5', '3', '4']));
+      }
+
+      chechMoviesSorting();
+
+      Future<void> changeSorting() async {
+        expect(find.text('Sort by rating'), findsOneWidget);
+        expect(find.text('Sort by year'), findsNothing);
+        await tester.tap(find.text('Sort by rating'));
+        await tester.pumpAndSettle();
+        expect(find.text('Sort by year'), findsOneWidget);
+        expect(find.text('Sort by rating'), findsNothing);
+      }
+
+      await changeSorting();
+
+      void chechMoviesSortingAgaint() {
+        final moviesIdsList = listItems.evaluate().map((element) {
+          final widget = element.widget as MovieItemWidget;
+          return widget.movie.id;
+        }).toList();
+
+        expect(moviesIdsList, equals(['1', '5', '4', '2', '3']));
+      }
+
+      chechMoviesSortingAgaint();
     });
   });
 }
