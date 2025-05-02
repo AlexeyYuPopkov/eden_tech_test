@@ -12,7 +12,7 @@ final class MovieMapper {
       posterUrl: src.posterUrl,
       duration: src.duration,
       rating: _calculateRating(src.ratings),
-      storyline: src.storyline,
+      storyline: src.storyline.replaceAll(RegExp(r'\s+'), ' '),
       actors: src.actors,
     );
   }

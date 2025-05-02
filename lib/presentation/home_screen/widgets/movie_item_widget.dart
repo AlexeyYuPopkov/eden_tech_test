@@ -1,5 +1,6 @@
+import 'package:eden_tech_test/presentation/widgets/movie_duration.dart';
 import 'package:eden_tech_test/presentation/widgets/movie_rating.dart';
-import 'package:eden_tech_test/presentation/widgets/movie_year_and_duration.dart';
+import 'package:eden_tech_test/presentation/widgets/movie_year.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,7 +8,7 @@ import 'package:eden_tech_test/app/theme/sizes.dart';
 import 'package:eden_tech_test/domain/models/movie.dart';
 
 final class MovieItemWidget extends StatelessWidget {
-  static const height = 100.0;
+  static const height = 120.0;
   final Movie movie;
   final VoidCallback? onTap;
 
@@ -47,7 +48,7 @@ final class MovieItemWidget extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: Sizes.halfIndent,
+                            spacing: Sizes.tinyIndent,
                             children: [
                               Text(
                                 movie.title,
@@ -57,7 +58,9 @@ final class MovieItemWidget extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              MovieYearAndDuration(movie: movie),
+                              const SizedBox(height: Sizes.halfIndent),
+                              MovieYear(movie: movie),
+                              MovieDuration(movie: movie),
                               MovieRating(movie: movie),
                             ],
                           ),

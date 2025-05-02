@@ -1,9 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eden_tech_test/app/theme/sizes.dart';
 import 'package:eden_tech_test/domain/models/movie.dart';
+import 'package:eden_tech_test/l10n/localization.dart';
 import 'package:eden_tech_test/presentation/widgets/common_nav_bar_button.dart';
+import 'package:eden_tech_test/presentation/widgets/expandable_text.dart';
+import 'package:eden_tech_test/presentation/widgets/movie_duration.dart';
 import 'package:eden_tech_test/presentation/widgets/movie_rating.dart';
-import 'package:eden_tech_test/presentation/widgets/movie_year_and_duration.dart';
+import 'package:eden_tech_test/presentation/widgets/movie_year.dart';
+
 import 'package:flutter/material.dart';
 
 final class MovieDetailsScreen extends StatelessWidget {
@@ -104,40 +108,79 @@ class _BottomSheet extends StatelessWidget {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(Sizes.indent2x),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Sizes.indent2x,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: Sizes.indent2x,
                     children: [
+                      const SizedBox(height: Sizes.indent2x),
                       Text(
                         movie.title,
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      MovieYearAndDuration(movie: movie),
-                      MovieRating(movie: movie),
-                      Text(
-                        movie.storyline,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: Sizes.tinyIndent,
+                        children: [
+                          MovieYear(movie: movie, scale: 1.2),
+                          MovieDuration(movie: movie, scale: 1.2),
+                          MovieRating(movie: movie, scale: 1.2),
+                        ],
+                      ),
+                      ExpandableText(
+                        text: movie.storyline,
+                        maxLines: 2,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      for (final actor in movie.actors) ...[
-                        Text(
-                          actor,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                      const SizedBox(height: Sizes.tinyIndent),
                     ],
                   ),
                 ),
               ),
+              if (movie.actors.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Sizes.indent2x,
+                      vertical: Sizes.indent,
+                    ),
+                    child: Text(
+                      context.l10n.movieDetailsScreenLabelActors,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              if (movie.actors.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Sizes.indent2x,
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: movie.actors.length,
+                    itemBuilder: (context, index) {
+                      return Text(
+                        movie.actors[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    },
+                    separatorBuilder: (context, index) {
+                      return const SizedBox(
+                        height: Sizes.tinyIndent,
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         ),
