@@ -1,16 +1,14 @@
 import 'package:eden_tech_test/app/router/app_router_path.dart';
 import 'package:eden_tech_test/app/theme/sizes.dart';
-import 'package:eden_tech_test/app/tools/exclude_from_tests.dart';
-import 'package:eden_tech_test/domain/models/movie.dart';
-import 'package:eden_tech_test/domain/usecases/get_movies_usecase.dart';
+import 'package:eden_tech_test/domain/models/authorized_user.dart';
+import 'package:eden_tech_test/domain/models/get_movies_usecase_sort_policy.dart';
 import 'package:eden_tech_test/l10n/localization.dart';
 import 'package:eden_tech_test/presentation/common/dialogs/show_dialog_helper.dart';
 import 'package:eden_tech_test/presentation/common/localization/error_localization_mapper.dart';
 import 'package:eden_tech_test/presentation/home_screen/bloc/home_screen_state.dart';
-import 'package:eden_tech_test/presentation/home_screen/widgets/movie_item_widget.dart';
-import 'package:eden_tech_test/presentation/widgets/common_shimmer_placeholder.dart';
-import 'package:eden_tech_test/presentation/widgets/no_data_placeholder.dart';
-import 'package:eden_tech_test/presentation/widgets/sliver_sized_box.dart';
+import 'package:eden_tech_test/presentation/home_screen/home_screen_tab.dart';
+import 'package:eden_tech_test/presentation/widgets/common_toolbar_tabs_widget.dart';
+import 'package:eden_tech_test/presentation/widgets/current_user_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +23,7 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
   void _listener(BuildContext context, HomeScreenState state) {
     switch (state) {
       case LoadingState():
+      case ShimmersState():
       case CommonState():
         break;
       case ErrorState():
@@ -46,65 +45,74 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        top: false,
         bottom: false,
-        child: ExcludeFromTests(
-          child: BlocProvider(
-            create: (context) => HomeScreenBloc(),
-            child: BlocConsumer<HomeScreenBloc, HomeScreenState>(
-              listener: _listener,
-              builder: (context, state) {
-                final isLoading = state is LoadingState;
-
-                return AbsorbPointer(
-                  absorbing: isLoading,
-                  child: RefreshIndicator(
-                    edgeOffset: Sizes.indent2x,
-                    onRefresh: () => _onRefresh(context),
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverAppBar(
-                          title: Text(context.l10n.homeScreenTitle),
-                          centerTitle: false,
-                          floating: true,
-                          snap: true,
-                          actions: const [
-                            _SortButton(),
-                            SizedBox(width: Sizes.indent2x),
-                          ],
-                        ),
-                        const SliverSizedBox(height: Sizes.indent2x),
-                        if (!isLoading && state.data.movies.isEmpty)
-                          SliverToBoxAdapter(
-                            child: NoDataPlaceholderScrollable(
-                              title: context.l10n.commonNoDataPlaceholderText,
-                            ),
-                          )
-                        else
-                          SliverList.separated(
-                            itemCount: state.data.movies.length,
-                            itemBuilder: (context, index) {
-                              final movie = state.data.movies[index];
-
-                              return isLoading
-                                  ? const _Shimmer()
-                                  : MovieItemWidget(
-                                      movie: movie,
-                                      onTap: () => _onDetails(context, movie),
-                                    );
-                            },
-                            separatorBuilder: (context, index) {
-                              return const SizedBox(height: Sizes.indent);
-                            },
+        child: BlocProvider(
+          create: (context) => HomeScreenBloc(),
+          child: BlocConsumer<HomeScreenBloc, HomeScreenState>(
+            listener: _listener,
+            builder: (context, state) {
+              final user = state.data.authorizedUser.value;
+              return AbsorbPointer(
+                absorbing: state.isLoading,
+                child: RefreshIndicator(
+                  edgeOffset: Sizes.indent2x,
+                  onRefresh: () => _onRefresh(context),
+                  child: DefaultTabController(
+                    length: HomeScreenTab.tabs.length,
+                    child: NestedScrollView(
+                      headerSliverBuilder: (context, bool innerBoxIsScrolled) =>
+                          [
+                        SliverOverlapAbsorber(
+                          handle:
+                              NestedScrollView.sliverOverlapAbsorberHandleFor(
+                            context,
                           ),
-                        const SliverToBoxAdapter(
-                          child: SafeArea(child: SizedBox()),
+                          sliver: SliverAppBar(
+                            title: Text(
+                              context.l10n.homeScreenTitle,
+                            ),
+                            centerTitle: false,
+                            floating: true,
+                            actions: [
+                              const _SortButton(),
+                              CurrentUserWidget(
+                                user: user,
+                                onProfile: user == null
+                                    ? null
+                                    : () => _onUserProfile(context, user),
+                                onLogin: () => _onLogIn(context),
+                                onLogout: () => _onLogOut(context),
+                              ),
+                              const SizedBox(width: Sizes.indent2x),
+                            ],
+                            bottom: const _AppBarBottom(),
+                          ),
                         ),
                       ],
+                      body: BlocListener<HomeScreenBloc, HomeScreenState>(
+                        listenWhen: (a, b) => a.data.tab != b.data.tab,
+                        listener: (context, state) =>
+                            DefaultTabController.of(context).animateTo(
+                          HomeScreenTab.tabs.indexOf(state.data.tab),
+                        ),
+                        child: TabBarView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            for (final tab in HomeScreenTab.tabs)
+                              RefreshIndicator(
+                                edgeOffset: Sizes.indent2x,
+                                onRefresh: () => _onRefresh(context),
+                                child: tab.build(context),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -112,14 +120,58 @@ final class HomeScreen extends StatelessWidget with ShowDialogHelper {
   }
 
   Future<void> _onRefresh(BuildContext context) async {
-    context.read<HomeScreenBloc>().add(const HomeScreenEvent.initial());
+    context.read<HomeScreenBloc>().add(const HomeScreenEvent.onRefresh());
   }
 
-  void _onDetails(BuildContext context, Movie movie) {
+  void _onLogOut(BuildContext context) {
+    context.read<HomeScreenBloc>().add(const HomeScreenEvent.logout());
+  }
+
+  void _onLogIn(BuildContext context) {
+    context.read<HomeScreenBloc>().add(const HomeScreenEvent.onAuth());
+  }
+
+  void _onUserProfile(BuildContext context, AuthorizedUser user) {
     GoRouter.of(context).push(
-      AppRouterPath.movieDetails,
-      extra: movie.toJson(),
+      AppRouterPath.userProfile,
+      extra: user.toJson(),
     );
+  }
+}
+
+final class _AppBarBottom extends StatelessWidget
+    implements PreferredSizeWidget {
+  static const tabbarHeight = Sizes.indent4x + Sizes.indent;
+  const _AppBarBottom();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: BlocSelector<HomeScreenBloc, HomeScreenState, HomeScreenTab>(
+        selector: (state) => state.data.tab,
+        builder: (context, tab) {
+          return CommonToolbarTabsWidget(
+            currentTab: tab,
+            tabs: HomeScreenTab.tabs,
+            onChangeTab: _onChangeTab,
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(tabbarHeight);
+
+  void _onChangeTab(
+    BuildContext context,
+    int index,
+    CommonToolbarTabsWidgetTab tab,
+  ) {
+    context.read<HomeScreenBloc>().add(
+          HomeScreenEvent.changeTab(tab as HomeScreenTab),
+        );
   }
 }
 
@@ -151,22 +203,6 @@ final class _SortButton extends StatelessWidget {
     context.read<HomeScreenBloc>().add(
           const HomeScreenEvent.toggleSortPolicy(),
         );
-  }
-}
-
-class _Shimmer extends StatelessWidget {
-  const _Shimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Sizes.indent2x,
-      ),
-      child: CommonShimmerPlaceholder(
-        size: Size.fromHeight(MovieItemWidget.height),
-      ),
-    );
   }
 }
 

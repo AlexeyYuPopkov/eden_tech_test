@@ -1,6 +1,7 @@
+import 'package:eden_tech_test/domain/models/authorized_user.dart';
 import 'package:eden_tech_test/domain/models/movie.dart';
 import 'package:eden_tech_test/presentation/home_screen/home_screen.dart';
-import 'package:eden_tech_test/presentation/login_screen/login_screen.dart';
+import 'package:eden_tech_test/presentation/login_screen/user_profile_screen.dart';
 import 'package:eden_tech_test/presentation/movie_details_screen/movie_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -29,17 +30,17 @@ final class AppRouter {
         ],
       ),
       GoRoute(
-        path: AppRouterPath.login,
+        path: AppRouterPath.userProfile,
         builder: (BuildContext context, GoRouterState state) {
-          return const LoginScreen();
+          return UserProfileScreen(
+            user: AuthorizedUser.fromJson(state.extra as Map<String, dynamic>),
+          );
         },
       ),
     ],
     // redirect: (context, state) {
     //   if (authRepository.isAuthorized) {
-    //     return AppRouterPath.home;
     //   } else {
-    //     return AppRouterPath.login;
     //   }
     // },
   );
