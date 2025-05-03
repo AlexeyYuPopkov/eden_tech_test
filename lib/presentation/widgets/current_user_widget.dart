@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eden_tech_test/app/theme/sizes.dart';
+import 'package:eden_tech_test/app/tools/exclude_from_tests.dart';
 import 'package:eden_tech_test/domain/models/authorized_user.dart';
 import 'package:eden_tech_test/l10n/localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -117,11 +118,14 @@ final class _CurrentUserWidgetContent extends StatelessWidget {
     final user = this.user;
     return user == null || user.photoUrl.isEmpty
         ? const _NoNameWidget()
-        : CachedNetworkImage(
-            height: Sizes.iconBig,
-            width: Sizes.iconBig,
-            imageUrl: user.photoUrl,
-            errorWidget: (context, url, error) => const _NoNameWidget(),
+        : ExcludeFromTests(
+            placeholder: const _NoNameWidget(),
+            child: CachedNetworkImage(
+              height: Sizes.iconBig,
+              width: Sizes.iconBig,
+              imageUrl: user.photoUrl,
+              errorWidget: (context, url, error) => const _NoNameWidget(),
+            ),
           );
   }
 }

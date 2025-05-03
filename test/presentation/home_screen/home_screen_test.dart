@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:di_storage/di_storage.dart';
 import 'package:eden_tech_test/app/theme/app_theme.dart';
 import 'package:eden_tech_test/data/auth/firebase_firestore_service.dart';
@@ -12,6 +13,8 @@ import 'package:eden_tech_test/presentation/home_screen/bloc/home_screen_bloc.da
 import 'package:eden_tech_test/presentation/home_screen/bloc/home_screen_state.dart';
 import 'package:eden_tech_test/presentation/home_screen/home_screen.dart';
 import 'package:eden_tech_test/presentation/home_screen/widgets/movie_item_widget.dart';
+import 'package:eden_tech_test/presentation/widgets/current_user_widget.dart';
+import 'package:eden_tech_test/presentation/widgets/no_data_placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -91,12 +94,10 @@ void main() {
   });
 
   group('HomeScreen', () {
-    testWidgets('HomeScreen', (WidgetTester tester) async {
+    testWidgets('HomeScreen - unauth', (WidgetTester tester) async {
       final api = DiStorage.shared.resolve<GetMoviesApi>() as MockGetMoviesApi;
       final authRepo =
           DiStorage.shared.resolve<AuthRepository>() as MockAuthRepository;
-      // final firestore = DiStorage.shared.resolve<FirebaseFirestoreService>()
-      //     as MockFirebaseFirestoreService;
 
       when(
         () => authRepo.authorizedUserStream,
@@ -110,12 +111,6 @@ void main() {
         ),
       );
 
-      when(
-        () => api.getMovies(),
-      ).thenAnswer(
-        (_) async => HomeScreenTestHelper.apiGetMoviesResponceStr,
-      );
-
       await tester.pumpWidget(
         MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -127,6 +122,10 @@ void main() {
         ),
       );
 
+      final l10n = Localization.of(tester.element(find.byType(HomeScreen)));
+
+      expect(l10n, isNotNull);
+
       when(
         () => api.getMovies(),
       ).thenAnswer(
@@ -134,6 +133,9 @@ void main() {
       );
 
       await tester.pumpAndSettle();
+
+      expect(find.text(l10n!.homeScreenTabMovies), findsOneWidget);
+      expect(find.text(l10n.homeScreenTabFavorites), findsOneWidget);
 
       final homeScreenBlocConsumer =
           find.byType(BlocConsumer<HomeScreenBloc, HomeScreenState>);
@@ -143,7 +145,7 @@ void main() {
 
       expect(homeScreenBlocConsumer, findsOneWidget);
 
-      // expect(find.byType(CurrentUserWidget), findsOneWidget);
+      expect(find.byType(CurrentUserWidget), findsOneWidget);
 
       final listItems = find.byType(MovieItemWidget);
 
@@ -195,6 +197,17 @@ void main() {
       }
 
       chechMoviesSortingAgaint();
+
+      Future<void> checkTransistionToFavorites() async {
+        await tester.tap(find.text(l10n.homeScreenTabFavorites));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MovieItemWidget), findsNothing);
+        expect(find.byType(NoDataPlaceholderScrollable), findsOneWidget);
+        expect(find.text(l10n.commonNoDataPlaceholderText), findsOneWidget);
+      }
+
+      await checkTransistionToFavorites();
     });
   });
 }

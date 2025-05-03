@@ -1,3 +1,4 @@
+import 'package:eden_tech_test/app/tools/exclude_from_tests.dart';
 import 'package:eden_tech_test/presentation/widgets/movie_duration.dart';
 import 'package:eden_tech_test/presentation/widgets/movie_rating.dart';
 import 'package:eden_tech_test/presentation/widgets/movie_year.dart';
@@ -40,13 +41,25 @@ final class MovieItemWidget extends StatelessWidget {
                   onPressed: onTap,
                   child: Row(
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: movie.posterUrl,
-                        height: height,
-                        width: height,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.error),
+                      ExcludeFromTests(
+                        placeholder: const SizedBox(
+                          height: height,
+                          width: height,
+                        ),
+                        child: movie.posterUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: movie.posterUrl,
+                                height: height,
+                                width: height,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              )
+                            : const SizedBox(
+                                height: height,
+                                width: height,
+                                child: Icon(Icons.error),
+                              ),
                       ),
                       Expanded(
                         child: ColoredBox(
@@ -73,11 +86,6 @@ final class MovieItemWidget extends StatelessWidget {
                                   MovieYear(movie: movie),
                                   MovieDuration(movie: movie),
                                   MovieRating(movie: movie),
-                                  // _Footer(
-                                  //   movie: movie,
-                                  //   isFavorite: isFavorite,
-                                  //   onLike: onLike,
-                                  // ),
                                 ],
                               ),
                             ),
@@ -103,41 +111,6 @@ final class MovieItemWidget extends StatelessWidget {
     );
   }
 }
-
-// final class _Footer extends StatelessWidget {
-//   const _Footer({
-//     required this.movie,
-//     required this.isFavorite,
-//     required this.onLike,
-//   });
-
-//   final Movie movie;
-//   final bool isFavorite;
-//   final VoidCallback? onLike;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Stack(
-//       children: [
-//         Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//           spacing: Sizes.indent,
-//           children: [
-//             MovieRating(movie: movie),
-//             const SizedBox(width: Sizes.iconSmall),
-//           ],
-//         ),
-//         Positioned(
-//           right: Sizes.zero,
-//           child: _Like(
-//             isFavorite: isFavorite,
-//             onPressed: onLike,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
 
 final class _Like extends StatelessWidget {
   final bool isFavorite;
