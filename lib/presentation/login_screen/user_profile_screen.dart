@@ -84,7 +84,7 @@ final class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(
-                      top: kToolbarHeight + Sizes.indent4x,
+                      top: kToolbarHeight,
                       bottom: Sizes.indent2x,
                     ),
                     child: Center(
@@ -94,7 +94,7 @@ final class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   ),
                   const Positioned(
-                    top: kToolbarHeight + Sizes.indent4x,
+                    top: kToolbarHeight,
                     left: Sizes.indent,
                     child: CommonNavBarBack(),
                   )
