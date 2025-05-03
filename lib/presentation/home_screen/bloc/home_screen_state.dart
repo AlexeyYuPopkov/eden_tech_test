@@ -14,6 +14,10 @@ sealed class HomeScreenState extends Equatable {
     required HomeScreenData data,
   }) = CommonState;
 
+  const factory HomeScreenState.shimmers({
+    required HomeScreenData data,
+  }) = ShimmersState;
+
   const factory HomeScreenState.loading({
     required HomeScreenData data,
   }) = LoadingState;
@@ -22,10 +26,17 @@ sealed class HomeScreenState extends Equatable {
     required HomeScreenData data,
     required Object error,
   }) = ErrorState;
+
+  bool get isLoading => this is LoadingState || hasShimmers;
+  bool get hasShimmers => this is ShimmersState;
 }
 
 final class CommonState extends HomeScreenState {
   const CommonState({required super.data});
+}
+
+final class ShimmersState extends HomeScreenState {
+  const ShimmersState({required super.data});
 }
 
 final class LoadingState extends HomeScreenState {

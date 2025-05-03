@@ -1,5 +1,12 @@
+import 'dart:async';
 import 'package:di_storage/di_storage.dart';
+import 'package:eden_tech_test/domain/auth/auth_repository.dart';
+import 'package:eden_tech_test/domain/models/authorized_user.dart';
+import 'package:eden_tech_test/domain/models/get_movies_usecase_sort_policy.dart';
+import 'package:eden_tech_test/app/tools/optional_box.dart';
+import 'package:eden_tech_test/domain/usecases/favorites_usecase.dart';
 import 'package:eden_tech_test/domain/usecases/get_movies_usecase.dart';
+import 'package:eden_tech_test/presentation/home_screen/home_screen_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'home_screen_data.dart';
@@ -9,8 +16,12 @@ import 'home_screen_state.dart';
 final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
   HomeScreenData get data => state.data;
 
-  late final GetMoviesUsecase getMoviesUsecase =
-      DiStorage.shared.resolve<GetMoviesUsecase>();
+  final getMoviesUsecase = DiStorage.shared.resolve<GetMoviesUsecase>();
+  final favoritesUsecase = DiStorage.shared.resolve<FavoritesUsecase>();
+  final authRepository = DiStorage.shared.resolve<AuthRepository>();
+
+  StreamSubscription? _authSubscription;
+  StreamSubscription? _favoritesSubscription;
 
   HomeScreenBloc()
       : super(
@@ -19,14 +30,53 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
           ),
         ) {
     _setupHandlers();
-
     add(const HomeScreenEvent.initial());
+    _setupSubscriptions();
   }
 
   void _setupHandlers() {
     on<InitialEvent>(_onInitialEvent);
+    on<ReceiveFavoritesEvent>(_onReceiveFavoritesEvent);
+    on<ChangeTabEvent>(_onChangeTabEvent);
     on<ToggleSortPolicyEvent>(_onToggleSortPolicyEvent);
     on<OnAuthEvent>(_onAuthEvent);
+    on<DidChangeAuthStateEvent>(_onDidChangeAuthStateEvent);
+    on<LogOutEvent>(_onLogOutEvent);
+    on<OnLikeEvent>(_onLikeEvent);
+    on<OnRefreshEvent>(_onRefreshEvent);
+  }
+
+  void _setupSubscriptions() {
+    _authSubscription =
+        authRepository.authorizedUserStream.distinct().listen((user) {
+      _setupFavoritesSubscription(user);
+      add(HomeScreenEvent.didChangeAuthState(user: user));
+    });
+  }
+
+  void _setupFavoritesSubscription(AuthorizedUser? user) {
+    if (user != null) {
+      final favoritesStream = favoritesUsecase.getFavoritesStream(
+        data.favoritesSortPolicy,
+      );
+      _favoritesSubscription?.cancel();
+      _favoritesSubscription = favoritesStream.listen(
+        (movies) {
+          add(HomeScreenEvent.receiveFavorites(movies));
+        },
+      );
+    } else {
+      _favoritesSubscription?.cancel();
+      _favoritesSubscription = null;
+      add(const HomeScreenEvent.receiveFavorites([]));
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _authSubscription?.cancel();
+    _favoritesSubscription?.cancel();
+    return super.close();
   }
 
   void _onInitialEvent(
@@ -34,11 +84,14 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
     Emitter<HomeScreenState> emit,
   ) async {
     try {
-      emit(HomeScreenState.loading(data: data));
+      emit(HomeScreenState.shimmers(data: data));
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      // to show shimmers
+      await Future.delayed(const Duration(milliseconds: 200));
 
-      final result = await getMoviesUsecase.execute(data.sortPolicy);
+      final result = await getMoviesUsecase.execute(
+        data.moviesSortPolicy,
+      );
 
       emit(
         HomeScreenState.common(
@@ -46,40 +99,148 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
         ),
       );
     } catch (e) {
-      emit(HomeScreenState.error(error: e, data: data));
+      emit(
+        HomeScreenState.error(error: e, data: data),
+      );
     }
+  }
+
+  void _onReceiveFavoritesEvent(
+    ReceiveFavoritesEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {
+    final newData = data.copyWith(
+      favorites: event.favorites,
+    );
+    if (state.hasShimmers && data.tab is MoviesTab) {
+      emit(HomeScreenState.shimmers(data: newData));
+    } else {
+      emit(HomeScreenState.common(data: newData));
+    }
+  }
+
+  void _onChangeTabEvent(
+    ChangeTabEvent event,
+    Emitter<HomeScreenState> emit,
+  ) {
+    emit(
+      HomeScreenState.common(
+        data: data.copyWith(tab: event.tab),
+      ),
+    );
   }
 
   void _onToggleSortPolicyEvent(
     ToggleSortPolicyEvent event,
     Emitter<HomeScreenState> emit,
   ) {
-    switch (data.sortPolicy) {
-      case GetMoviesUsecaseSortByYear():
+    switch (data.tab) {
+      case MoviesTab():
         emit(
           HomeScreenState.common(
             data: data.copyWith(
-              sortPolicy: const GetMoviesUsecaseSortByRating(),
+              moviesSortPolicy: data.moviesSortPolicy.toggle(),
             ),
           ),
         );
+
+        add(const HomeScreenEvent.initial());
         break;
-      case GetMoviesUsecaseSortByRating():
+      case FavoritesTab():
         emit(
           HomeScreenState.common(
             data: data.copyWith(
-              sortPolicy: const GetMoviesUsecaseSortByYear(),
+              favoritesSortPolicy: data.favoritesSortPolicy.toggle(),
             ),
           ),
         );
+
+        _setupFavoritesSubscription(data.authorizedUser.value);
         break;
     }
-
-    add(const HomeScreenEvent.initial());
   }
 
   void _onAuthEvent(
     OnAuthEvent event,
     Emitter<HomeScreenState> emit,
-  ) async {}
+  ) async {
+    try {
+      await authRepository.signInWithGoogle();
+    } catch (e) {
+      emit(HomeScreenState.error(error: e, data: data));
+    }
+  }
+
+  void _onDidChangeAuthStateEvent(
+    DidChangeAuthStateEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {
+    final newData = data.copyWith(
+      authorizedUser: OptionalBox(event.user),
+      favorites: event.user == null ? [] : null,
+    );
+    if (state.hasShimmers) {
+      emit(HomeScreenState.shimmers(data: newData));
+    } else {
+      emit(HomeScreenState.common(data: newData));
+    }
+  }
+
+  void _onLogOutEvent(
+    LogOutEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {
+    try {
+      await authRepository.signOut();
+    } catch (e) {
+      emit(HomeScreenState.error(error: e, data: data));
+    }
+  }
+
+  void _onLikeEvent(
+    OnLikeEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {
+    try {
+      if (!data.isAuthorized) {
+        final user = await authRepository.signInWithGoogle();
+        if (user != null) {
+          add(HomeScreenEvent.onLike(movie: event.movie));
+        }
+      } else {
+        await favoritesUsecase.toggleFavorite(
+          movie: event.movie,
+        );
+      }
+    } catch (e) {
+      emit(HomeScreenState.error(error: e, data: data));
+    }
+  }
+
+  void _onRefreshEvent(
+    OnRefreshEvent event,
+    Emitter<HomeScreenState> emit,
+  ) async {
+    emit(HomeScreenState.shimmers(data: data));
+    await Future.delayed(const Duration(milliseconds: 300));
+    switch (data.tab) {
+      case MoviesTab():
+        add(const HomeScreenEvent.initial());
+        break;
+      case FavoritesTab():
+        _setupFavoritesSubscription(data.authorizedUser.value);
+        break;
+    }
+  }
+}
+
+extension on GetMoviesUsecaseSortPolicy {
+  GetMoviesUsecaseSortPolicy toggle() {
+    switch (this) {
+      case GetMoviesUsecaseSortByYear():
+        return const GetMoviesUsecaseSortByRating();
+      case GetMoviesUsecaseSortByRating():
+        return const GetMoviesUsecaseSortByYear();
+    }
+  }
 }

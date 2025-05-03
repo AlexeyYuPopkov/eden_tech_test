@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'package:di_storage/di_storage.dart';
-
 import 'package:eden_tech_test/app/theme/app_theme.dart';
-import 'package:eden_tech_test/data/auth/auth_repository_impl.dart';
+import 'package:eden_tech_test/data/auth/firebase_firestore_service.dart';
 import 'package:eden_tech_test/data/data_sources/movies_repository_impl.dart';
 import 'package:eden_tech_test/data/service/get_movies_api.dart';
 import 'package:eden_tech_test/domain/auth/auth_repository.dart';
 import 'package:eden_tech_test/domain/repository/movies_repository.dart';
+import 'package:eden_tech_test/domain/usecases/favorites_usecase.dart';
 import 'package:eden_tech_test/domain/usecases/get_movies_usecase.dart';
 import 'package:eden_tech_test/l10n/localization.dart';
 import 'package:eden_tech_test/presentation/home_screen/bloc/home_screen_bloc.dart';
 import 'package:eden_tech_test/presentation/home_screen/bloc/home_screen_state.dart';
 import 'package:eden_tech_test/presentation/home_screen/home_screen.dart';
 import 'package:eden_tech_test/presentation/home_screen/widgets/movie_item_widget.dart';
+import 'package:eden_tech_test/presentation/widgets/current_user_widget.dart';
+import 'package:eden_tech_test/presentation/widgets/no_data_placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -27,12 +30,23 @@ class MockGetMoviesApi extends Mock implements GetMoviesApi {
   // }
 }
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockFirebaseFirestoreService extends Mock
+    implements FirebaseFirestoreService {}
+
 final class TestDiScope extends DiScope {
   @override
   void bind(DiStorage di) {
     di.bind<AuthRepository>(
       module: this,
-      () => AuthRepositoryImpl(),
+      () => MockAuthRepository(),
+      lifeTime: const LifeTime.single(),
+    );
+
+    di.bind<FirebaseFirestoreService>(
+      module: this,
+      () => MockFirebaseFirestoreService(),
       lifeTime: const LifeTime.single(),
     );
 
@@ -46,6 +60,7 @@ final class TestDiScope extends DiScope {
       module: this,
       () => MoviesRepositoryImpl(
         getMoviesApi: di.resolve(),
+        favoritesApi: di.resolve(),
       ),
       lifeTime: const LifeTime.single(),
     );
@@ -54,6 +69,15 @@ final class TestDiScope extends DiScope {
       module: this,
       () => GetMoviesUsecase(
         repository: di.resolve(),
+      ),
+      lifeTime: const LifeTime.single(),
+    );
+
+    di.bind<FavoritesUsecase>(
+      module: this,
+      () => FavoritesUsecase(
+        repository: di.resolve(),
+        authRepository: di.resolve(),
       ),
       lifeTime: const LifeTime.single(),
     );
@@ -69,8 +93,24 @@ void main() {
     DiStorage.shared.removeAll();
   });
 
-  group('description', () {
-    testWidgets('HomeScreen', (WidgetTester tester) async {
+  group('HomeScreen', () {
+    testWidgets('HomeScreen - unauth', (WidgetTester tester) async {
+      final api = DiStorage.shared.resolve<GetMoviesApi>() as MockGetMoviesApi;
+      final authRepo =
+          DiStorage.shared.resolve<AuthRepository>() as MockAuthRepository;
+
+      when(
+        () => authRepo.authorizedUserStream,
+      ).thenAnswer(
+        (_) => Stream.value(
+          null,
+          // const AuthorizedUser(
+          //   id: 'id',
+          //   photoUrl: 'photoUrl',
+          // ),
+        ),
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -82,7 +122,9 @@ void main() {
         ),
       );
 
-      final api = DiStorage.shared.resolve<GetMoviesApi>();
+      final l10n = Localization.of(tester.element(find.byType(HomeScreen)));
+
+      expect(l10n, isNotNull);
 
       when(
         () => api.getMovies(),
@@ -92,26 +134,40 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      expect(find.text(l10n!.homeScreenTabMovies), findsOneWidget);
+      expect(find.text(l10n.homeScreenTabFavorites), findsOneWidget);
+
       final homeScreenBlocConsumer =
           find.byType(BlocConsumer<HomeScreenBloc, HomeScreenState>);
 
+      final bloc =
+          tester.element(homeScreenBlocConsumer).read<HomeScreenBloc>();
+
       expect(homeScreenBlocConsumer, findsOneWidget);
+
+      expect(find.byType(CurrentUserWidget), findsOneWidget);
 
       final listItems = find.byType(MovieItemWidget);
 
       void chechMoviesCount() {
-        expect(listItems, findsNWidgets(5));
+        expect(bloc.data.movies.length, 5);
+        expect(listItems, findsAtLeast(4));
       }
 
       chechMoviesCount();
 
       void chechMoviesSorting() {
+        expect(
+          bloc.data.movies.map((e) => e.id).toList(),
+          ['1', '2', '5', '3', '4'],
+        );
+
         final moviesIdsList = listItems.evaluate().map((element) {
           final widget = element.widget as MovieItemWidget;
           return widget.movie.id;
         }).toList();
 
-        expect(moviesIdsList, equals(['1', '2', '5', '3', '4']));
+        expect(moviesIdsList, equals(['1', '2', '5', '3']));
       }
 
       chechMoviesSorting();
@@ -128,15 +184,30 @@ void main() {
       await changeSorting();
 
       void chechMoviesSortingAgaint() {
+        expect(
+          bloc.data.movies.map((e) => e.id).toList(),
+          ['1', '5', '4', '2', '3'],
+        );
         final moviesIdsList = listItems.evaluate().map((element) {
           final widget = element.widget as MovieItemWidget;
           return widget.movie.id;
         }).toList();
 
-        expect(moviesIdsList, equals(['1', '5', '4', '2', '3']));
+        expect(moviesIdsList, equals(['1', '5', '4', '2']));
       }
 
       chechMoviesSortingAgaint();
+
+      Future<void> checkTransistionToFavorites() async {
+        await tester.tap(find.text(l10n.homeScreenTabFavorites));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MovieItemWidget), findsNothing);
+        expect(find.byType(NoDataPlaceholderScrollable), findsOneWidget);
+        expect(find.text(l10n.commonNoDataPlaceholderText), findsOneWidget);
+      }
+
+      await checkTransistionToFavorites();
     });
   });
 }

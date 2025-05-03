@@ -7,7 +7,11 @@ import 'app_error_localization.dart';
 final class ErrorLocalizationMapper implements AppErrorLocalization {
   static const instance = ErrorLocalizationMapper();
 
-  static const mappers = <AppErrorLocalization>[];
+  static const mappers = <AppErrorLocalization>[
+    AuthErrorMapper(),
+    GetMoviesUsecaseErrorMapper(),
+    FavoritesErrorMapper(),
+  ];
 
   const ErrorLocalizationMapper();
 
@@ -17,15 +21,13 @@ final class ErrorLocalizationMapper implements AppErrorLocalization {
       if (error.message.isNotEmpty) {
         return error.message;
       }
+    }
 
-      for (final mapper in mappers) {
-        final message = mapper.getMessage(context, error);
-        if (message.isNotEmpty) {
-          return message;
-        }
+    for (final mapper in mappers) {
+      final message = mapper.getMessage(context, error);
+      if (message.isNotEmpty) {
+        return message;
       }
-
-      return context.l10n.commonUndefinedError;
     }
 
     return context.l10n.commonUndefinedError;

@@ -1,10 +1,9 @@
-import 'package:eden_tech_test/domain/models/authorized_user.dart';
 import 'package:eden_tech_test/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-final class FbAuthService {
+class FbAuthService {
   // static const _scopes = <String>[
   //   'email',
   //   // 'profile',
@@ -13,12 +12,8 @@ final class FbAuthService {
 
   late final FirebaseAuth _auth;
 
-  Stream<AuthorizedUser?> get authorizedUserStream => FirebaseAuth.instance
-      .authStateChanges()
-      .map(
-        (e) => e?.toAuthorizedUser(),
-      )
-      .asBroadcastStream();
+  Stream<User?> get authorizedUserStream =>
+      FirebaseAuth.instance.authStateChanges().asBroadcastStream();
 
   FbAuthService._();
 
@@ -28,6 +23,20 @@ final class FbAuthService {
     );
 
     _auth = FirebaseAuth.instance;
+  }
+
+  User? get currentUser => _auth.currentUser;
+
+  Future<User?> getCurrentUser() async {
+    final user = _auth.currentUser;
+
+    //  final googleSignIn = GoogleSignIn();
+
+    if (user != null) {
+      return user;
+    } else {
+      return null;
+    }
   }
 
   Future<User?> signInWithGoogle() async {
@@ -51,16 +60,6 @@ final class FbAuthService {
     await _auth.signOut();
     final googleSignIn = GoogleSignIn();
     await googleSignIn.signOut();
-  }
-}
-
-extension on User {
-  AuthorizedUser toAuthorizedUser() {
-    return AuthorizedUser(
-      id: uid,
-      email: email ?? '',
-      displayName: displayName ?? '',
-      photoUrl: photoURL ?? '',
-    );
+    // await googleSignIn.disconnect();
   }
 }
