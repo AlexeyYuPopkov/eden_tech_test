@@ -13,7 +13,7 @@
     "errorGetFavoritesUsecaseError": "Failed to fetch favorites.",
     "errorToggleFavoritesUsecaseError": "Failed to toggle favorites.",
     "errorRemoveFavoritesUsecaseError": "Failed to remove from favorites.",
-    "homeScreenTitle": "Movies",
+    "homeScreenTitle": "Top Movies",
     "homeScreenButtonSortByYear": "Sort by year",
     "homeScreenButtonSortByRating": "Sort by rating",
      "homeScreenUserProfile": "Profile Settings",

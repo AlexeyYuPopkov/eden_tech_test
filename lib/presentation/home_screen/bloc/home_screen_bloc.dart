@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:di_storage/di_storage.dart';
 import 'package:eden_tech_test/domain/auth/auth_repository.dart';
+import 'package:eden_tech_test/domain/models/authorized_user.dart';
 import 'package:eden_tech_test/domain/models/get_movies_usecase_sort_policy.dart';
 import 'package:eden_tech_test/app/tools/optional_box.dart';
 import 'package:eden_tech_test/domain/usecases/favorites_usecase.dart';
@@ -15,11 +16,8 @@ import 'home_screen_state.dart';
 final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
   HomeScreenData get data => state.data;
 
-  final GetMoviesUsecase getMoviesUsecase =
-      DiStorage.shared.resolve<GetMoviesUsecase>();
-
-  final FavoritesUsecase favoritesUsecase = DiStorage.shared.resolve();
-
+  final getMoviesUsecase = DiStorage.shared.resolve<GetMoviesUsecase>();
+  final favoritesUsecase = DiStorage.shared.resolve<FavoritesUsecase>();
   final authRepository = DiStorage.shared.resolve<AuthRepository>();
 
   StreamSubscription? _authSubscription;
@@ -49,20 +47,24 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
   }
 
   void _setupSubscriptions() {
-    _authSubscription = authRepository.authorizedUserStream.listen((user) {
+    _authSubscription =
+        authRepository.authorizedUserStream.distinct().listen((user) {
+      _setupFavoritesSubscription(user);
       add(HomeScreenEvent.didChangeAuthState(user: user));
     });
   }
 
-  void _setupFavoritesSubscription() {
-    if (data.isAuthorized) {
+  void _setupFavoritesSubscription(AuthorizedUser? user) {
+    if (user != null) {
       final favoritesStream = favoritesUsecase.getFavoritesStream(
         data.favoritesSortPolicy,
       );
       _favoritesSubscription?.cancel();
-      _favoritesSubscription = favoritesStream.listen((movies) {
-        add(HomeScreenEvent.receiveFavorites(movies));
-      });
+      _favoritesSubscription = favoritesStream.listen(
+        (movies) {
+          add(HomeScreenEvent.receiveFavorites(movies));
+        },
+      );
     } else {
       _favoritesSubscription?.cancel();
       _favoritesSubscription = null;
@@ -153,7 +155,7 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
           ),
         );
 
-        _setupFavoritesSubscription();
+        _setupFavoritesSubscription(data.authorizedUser.value);
         break;
     }
   }
@@ -182,8 +184,6 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
     } else {
       emit(HomeScreenState.common(data: newData));
     }
-
-    _setupFavoritesSubscription();
   }
 
   void _onLogOutEvent(
@@ -228,7 +228,7 @@ final class HomeScreenBloc extends Bloc<HomeScreenEvent, HomeScreenState> {
         add(const HomeScreenEvent.initial());
         break;
       case FavoritesTab():
-        _setupFavoritesSubscription();
+        _setupFavoritesSubscription(data.authorizedUser.value);
         break;
     }
   }

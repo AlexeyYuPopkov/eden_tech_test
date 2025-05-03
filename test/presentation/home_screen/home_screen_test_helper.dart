@@ -1,3 +1,9 @@
+import 'dart:convert';
+
+import 'package:eden_tech_test/data/mappers/movie_mapper.dart';
+import 'package:eden_tech_test/data/models/movie_dto.dart';
+import 'package:eden_tech_test/domain/models/movie.dart';
+
 final class HomeScreenTestHelper {
   static const apiGetMoviesResponceStr = r'''
 [
@@ -281,4 +287,17 @@ final class HomeScreenTestHelper {
     }
  ]
       ''';
+
+  static List<Movie> favoritesResponce() {
+    final json = jsonDecode(apiGetMoviesResponceStr) as List;
+
+    final responceDataModels = [
+      for (final item in json) MovieDto.fromJson(item as Map<String, dynamic>)
+    ];
+
+    final result =
+        responceDataModels.take(2).map((e) => MovieMapper.toDomain(e)).toList();
+
+    return result;
+  }
 }
